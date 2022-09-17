@@ -33,6 +33,19 @@ namespace MoviesAPI.Controllers
             _fileStorageService = fileStorageService;
         }
 
+        [HttpPost("searchByName")]
+        public async Task<ActionResult<List<ActorMovieDTO>>> SerachByname([FromBody]string name)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                return new List<ActorMovieDTO>();
+            }
+            return await _context.Actors.Where(x => x.Name.Contains(name))
+                                        .OrderBy(x => x.Name)
+                                        .Select(x => new ActorMovieDTO { Id = x.Id, Name = x.Name, Picture = x.Picture })
+                                        .Take(5).ToListAsync();
+        }
+
         [HttpGet] // api/actors
         public async Task<ActionResult<List<ActorDTO>>> Get([FromQuery] PaginationDTO paginationDTO)
         {
@@ -77,10 +90,10 @@ namespace MoviesAPI.Controllers
             actor = _mapper.Map(actorCreationDTO, actor);
             if (actorCreationDTO.Picture != null)
             {
-                actor.Picture = await _fileStorageService.EditFile(containerName, 
-                                      actorCreationDTO.Picture,actor.Picture);
+                actor.Picture = await _fileStorageService.EditFile(containerName,
+                                      actorCreationDTO.Picture, actor.Picture);
             }
-          
+
             await _context.SaveChangesAsync();
             return NoContent();
 
